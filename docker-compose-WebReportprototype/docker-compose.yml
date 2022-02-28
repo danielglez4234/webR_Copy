@@ -1,0 +1,53 @@
+version: "3.5"
+
+services:
+
+  db:            
+    build: mysql/
+    hostname: db
+    container_name: db
+    ports:
+       - 3306:3306
+    networks:
+      - default
+    volumes:      
+      - data:/var/lib/mysql      
+    environment:
+      - MYSQL_ROOT_PASSWORD=passroot
+    healthcheck:
+      test: "/usr/bin/mysql --user=root --password=passroot --execute \"USE monitormanager;SHOW TABLES;SELECT * FROM state_value;\""
+      interval: 10s
+      timeout: 20s
+      retries: 50
+
+  webreport:    
+    build: tomcat/    
+    hostname: webreport
+    container_name: webreport
+    depends_on:      
+      - db
+    ports:
+      - 8080:8080
+    networks:
+      - default
+    volumes:             
+      - ./WebReport.war:/usr/local/tomcat/webapps/WebReport.war
+
+  webreportprototype:    
+    build: react/    
+    hostname: webreportprototype
+    container_name: webreportprototype
+    ports:
+      - 3005:3005
+    networks:
+      - default
+
+networks:
+  default:
+    ipam:
+      config:
+        - subnet: 172.18.0.0/22
+
+volumes:
+  data:
+
